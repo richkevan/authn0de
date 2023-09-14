@@ -1,18 +1,27 @@
 # oauth2-firebase-auth
 
-> ⚠️ This is a fork of [`oauth2-firebase`](https://github.com/yoichiro/oauth2-firebase), with additional support for custom login pages, amongst other minor changes. The docs have been kept largely the same until I get time to address them.
-
-> Modified for use by Instant Teams for use with internal applications please follow directions for further instructions
+> ⚠️ This is a fork of [`oauth2-firebase`](https://github.com/yoichiro/oauth2-firebase), with additional support for custom login pages, custom authorize routes. The docs have been kept largely the same until I get time to address them.
 
 This library provides an OAuth2 server implementation for Firebase Auth:
 
 - Email and password or passwordless login via your custom Firebase Auth page (this fork)
-- Federated login (Google, GitHub, Facebook) with hosted pages
 - Cloud Function for OAuth2 endpoints
 - Cloud Firestore to store token information
 - OAuth 2.0 Compliant
 
-[![NPM Version](https://img.shields.io/npm/v/oauth2-firebase-auth.svg)](https://www.npmjs.org/package/oauth2-firebase-auth)
+[![NPM Version](https://img.shields.io/npm/v/oauth2server-firebase)
+![npm](https://img.shields.io/npm/dw/oauth2server-firebase)
+](https://www.npmjs.org/package/oauth2server-firebase)
+[![GitHub repo size](https://img.shields.io/github/repo-size/richkevan/firebase-oauth)
+![GitHub Repo stars](https://img.shields.io/github/stars/richkevan/firebase-oauth)
+![GitHub forks](https://img.shields.io/github/forks/richkevan/firebase-oauth)
+![GitHub tag (with filter)](https://img.shields.io/github/v/tag/richkevan/firebase-oauth)](https://github.com/richkevan/firebase-oauth)
+![npm](https://img.shields.io/npm/dw/oauth2server-firebase)
+[![Discord](https://img.shields.io/discord/1151892177576788028?l)](https://discord.gg/vKwjwCYN)
+
+
+
+
 
 # How to install
 
@@ -25,13 +34,13 @@ Especially, it is necessary to enable the Google Sign-In or Facebook Login for F
 
 ## Install this library
 
-This library has been providing as JavaScript library on the npm repository. You can install this library
+This library has been provided as JavaScript library on the npm repository. You can install this library
 with the `npm` command. We represent your project directory `${PROJECT_HOME}`.
 
 ```bash
 $ cd ${PROJECT_HOME}
 $ cd functions
-$ npm install oauth2-firebase-auth --save
+$ npm install oauth2server-firebase --save
 ```
 
 ## Define endpoints as Cloud Functions
@@ -46,63 +55,6 @@ $ vi index.ts
 
 The code you need to write is the following:
 
-**Google Sign-In**
-
-```javascript
-import * as functions from "firebase-functions";
-import {authorize, Configuration, garbageCollection, googleAccountAuthentication, token} from "oauth2-firebase-auth";
-
-Configuration.init({
-  crypto_auth_token_secret_key_32: functions.config().crypto.auth_token_secret_key_32,
-  project_api_key: functions.config().project.api_key
-});
-
-exports.token = token();
-exports.authorize = authorize();
-exports.authentication = googleAccountAuthentication();
-exports.garbageCollection = garbageCollection();
-
-...
-```
-
-**Facebook Login**
-
-```javascript
-import * as functions from "firebase-functions";
-import {authorize, Configuration, garbageCollection, facebookAccountAuthentication, token} from "oauth2-firebase-auth";
-
-Configuration.init({
-  crypto_auth_token_secret_key_32: functions.config().crypto.auth_token_secret_key_32,
-  project_api_key: functions.config().project.api_key
-});
-
-exports.token = token();
-exports.authorize = authorize();
-exports.authentication = facebookAccountAuthentication();
-exports.garbageCollection = garbageCollection();
-
-...
-```
-
-**GitHub Login**
-
-```javascript
-import * as functions from "firebase-functions";
-import {authorize, Configuration, garbageCollection, githubAccountAuthentication, token} from "oauth2-firebase-auth";
-
-Configuration.init({
-  crypto_auth_token_secret_key_32: functions.config().crypto.auth_token_secret_key_32,
-  project_api_key: functions.config().project.api_key
-});
-
-exports.token = token();
-exports.authorize = authorize();
-exports.authentication = githubAccountAuthentication();
-exports.garbageCollection = garbageCollection();
-
-...
-```
-
 **Custom Login**
 
 ```javascript
@@ -115,7 +67,7 @@ Configuration.init({
 });
 
 exports.token = token();
-exports.authorize = authorize();
+exports.authorize = customAuthorize("https://region-project.cloudfunctions.net/authentication");
 exports.authentication = customAuthentication("https://example.com/login");
 exports.garbageCollection = garbageCollection();
 
@@ -181,7 +133,7 @@ $ cat /dev/urandom | base64 | fold -w 32 | head -n 1
 After generating the random string, you need to set the string as the shared key with the following `firebase` command.
 
 ```bash
-firebase functions:config:set crypto.auth_token_secret_key_32=<YOUR_GENERATED_RANDOM_STRING>
+PROCESS.ENV.OAUTHKEY=<YOUR_RANDOM_STRING>
 ```
 
 In addition, you need to set the API Key value of your Firebase project. You can retrieve the API Key value by the
@@ -190,10 +142,10 @@ following steps:
 1. Go to the setting page of your Firebase project: `https://console.firebase.google.com/project/<YOUR_PROJECT_ID>/settings/general/`
 1. Get the string of the field labeled `Web API Key`.
 
-Then, execute the following command to register the configuration:
+Then, register the configuration:
 
 ```bash
-firebase functions:config:set project.api_key=<YOUR_API_KEY>
+PROCESS.ENV.API_KEY=<YOUR_API_KEY>
 ```
 
 ## Deploy your project
@@ -303,7 +255,9 @@ If the access token is valid, you will retrieve the following result:
 ```json
 {
   "sub": "<AUTHENTICATED_USER_ID>",
-  "name": "<AUTHENTICATED_USER_NAME>"
+  "first_name": "<AUTHENTICATED_USER_NAME>",
+  "last_name": "<AUTHENTICATED_USER_NAME>",
+  "email": "<AUTHENTICATED_USER_EMAIL>"
 }
 ```
 
